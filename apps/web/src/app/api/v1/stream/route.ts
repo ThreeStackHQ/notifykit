@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { verifyApiKey } from '@/lib/api-key';
+import { checkRateLimit } from '@/lib/rate-limiter';
+import { handleOptions, CORS_HEADERS } from '@/lib/cors';
 import { addSubscriber, removeSubscriber } from '@/lib/sse-store';
 
+export { handleOptions as OPTIONS };
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
@@ -19,6 +22,11 @@ export async function GET(req: Request) {
   const keyData = await verifyApiKey(rawKey);
   if (!keyData) {
     return NextResponse.json({ error: 'Invalid API key' }, { status: 401 });
+  }
+
+  // Rate-limit new SSE connection attempts (max 120/hour per API key)
+  if (!checkRateLimit(`stream:${keyData.keyId}`, 120)) {
+    return NextResponse.json({ error: 'Too many stream connections. Try again later.' }, { status: 429 });
   }
 
   const encoder = new TextEncoder();
@@ -75,6 +83,7 @@ export async function GET(req: Request) {
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
       'X-Accel-Buffering': 'no',
+      ...CORS_HEADERS,
     },
   });
 }

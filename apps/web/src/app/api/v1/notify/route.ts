@@ -2,9 +2,13 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db, notifications, subscriptions, eq } from '@notifykit/db';
 import { verifyApiKey } from '@/lib/api-key';
+import { checkRateLimit } from '@/lib/rate-limiter';
+import { handleOptions, withCors } from '@/lib/cors';
 import { publishToSubscribers } from '@/lib/sse-store';
 import { sendNotificationEmail } from '@/lib/email';
 import { PLANS } from '@/lib/stripe';
+
+export { handleOptions as OPTIONS };
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +30,15 @@ export async function POST(req: Request) {
   const keyData = await verifyApiKey(rawKey);
   if (!keyData) {
     return NextResponse.json({ error: 'Invalid API key' }, { status: 401 });
+  }
+
+  // Per-key rate limiting (uses rateLimitPerHour stored on the API key row)
+  const allowed = checkRateLimit(`notify:${keyData.keyId}`, keyData.rateLimitPerHour);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded. Please slow down your requests.' },
+      { status: 429 }
+    );
   }
 
   // Tier limits
@@ -95,5 +108,5 @@ export async function POST(req: Request) {
     }).catch(() => {});
   }
 
-  return NextResponse.json(notification, { status: 201 });
+  return withCors(NextResponse.json(notification, { status: 201 }));
 }

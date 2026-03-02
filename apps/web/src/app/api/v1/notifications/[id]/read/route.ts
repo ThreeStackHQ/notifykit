@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { db, notifications, eq, and } from '@notifykit/db';
 import { verifyApiKey } from '@/lib/api-key';
+import { handleOptions, withCors } from '@/lib/cors';
 
+export { handleOptions as OPTIONS };
 export const dynamic = 'force-dynamic';
 
 export async function PATCH(
@@ -35,8 +37,8 @@ export async function PATCH(
     .returning();
 
   if (!updated) {
-    return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
+    return withCors(NextResponse.json({ error: 'Notification not found' }, { status: 404 }));
   }
 
-  return NextResponse.json(updated);
+  return withCors(NextResponse.json(updated));
 }

@@ -2,6 +2,19 @@ import { Resend } from 'resend';
 
 let _resend: Resend | null = null;
 
+/**
+ * Escape user-supplied content before injecting into HTML email bodies.
+ * Prevents HTML injection / phishing via crafted notification payloads.
+ */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 function getResend(): Resend {
   if (!_resend) {
     if (!process.env.RESEND_API_KEY) {
@@ -40,6 +53,14 @@ export async function sendNotificationEmail({
   const resend = getResend();
   const color = getCategoryColor(category);
 
+  // Escape all user-supplied fields to prevent HTML injection in email clients
+  const safeCategory = escapeHtml(category);
+  const safeTitle = escapeHtml(title);
+  const safeBody = escapeHtml(body);
+  // For actionUrl: only allow https:// links; strip anything else
+  const safeActionUrl =
+    actionUrl && /^https?:\/\//i.test(actionUrl) ? escapeHtml(actionUrl) : null;
+
   const html = `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -51,10 +72,10 @@ export async function sendNotificationEmail({
           <p style="margin:0;color:#fff;font-size:20px;font-weight:700;">NotifyKit</p>
         </td></tr>
         <tr><td style="padding:32px;">
-          <span style="display:inline-block;background:${color}22;color:${color};font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px">${category}</span>
-          <h1 style="margin:16px 0 8px;font-size:22px;color:#111;">${title}</h1>
-          <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.6;">${body}</p>
-          ${actionUrl ? `<a href="${actionUrl}" style="display:inline-block;background:${color};color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;">View Details</a>` : ''}
+          <span style="display:inline-block;background:${color}22;color:${color};font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px">${safeCategory}</span>
+          <h1 style="margin:16px 0 8px;font-size:22px;color:#111;">${safeTitle}</h1>
+          <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.6;">${safeBody}</p>
+          ${safeActionUrl ? `<a href="${safeActionUrl}" style="display:inline-block;background:${color};color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;">View Details</a>` : ''}
         </td></tr>
         <tr><td style="padding:20px 32px;border-top:1px solid #f0f0f0;">
           <p style="margin:0;font-size:12px;color:#aaa;">You received this email because your app uses NotifyKit. <a href="#" style="color:#0d9488;">Unsubscribe</a></p>

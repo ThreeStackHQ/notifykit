@@ -7,6 +7,7 @@ export interface ApiKeyVerifyResult {
   tier: string;
   notificationsSentThisMonth: number;
   keyId: string;
+  rateLimitPerHour: number;
 }
 
 export async function verifyApiKey(
@@ -62,5 +63,6 @@ export async function verifyApiKey(
     tier: sub?.tier ?? 'free',
     notificationsSentThisMonth: sub?.notificationsSentThisMonth ?? 0,
     keyId: keyRow.id,
+    rateLimitPerHour: keyRow.rateLimitPerHour ?? 1000,
   };
 }

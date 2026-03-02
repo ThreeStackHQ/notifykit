@@ -111,9 +111,10 @@ function init(opts: NotifyKitOptions): void {
     item.className = `nk-item${n.isRead ? '' : ' nk-unread'}`;
     item.dataset.id = n.id;
     item.innerHTML = `<p class="nk-item-title">${escapeHtml(n.title)}</p><p class="nk-item-body">${escapeHtml(n.body)}</p><p class="nk-item-meta"><span class="nk-badge-cat">${escapeHtml(n.category)}</span>${timeAgo(new Date(n.createdAt))}</p>`;
-    if (n.actionUrl) {
+    if (n.actionUrl && /^https?:\/\//i.test(n.actionUrl)) {
+      // Only allow http/https URLs — reject javascript: and data: schemes
       item.addEventListener('click', () => {
-        window.open(escapeHtml(n.actionUrl!), '_blank');
+        window.open(n.actionUrl!, '_blank', 'noopener,noreferrer');
       });
     }
     return item;

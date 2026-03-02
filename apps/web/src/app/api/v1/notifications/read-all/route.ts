@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { db, notifications, eq, and } from '@notifykit/db';
 import { verifyApiKey } from '@/lib/api-key';
+import { handleOptions, withCors } from '@/lib/cors';
 
+export { handleOptions as OPTIONS };
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
@@ -31,5 +33,5 @@ export async function POST(req: Request) {
       )
     );
 
-  return NextResponse.json({ success: true });
+  return withCors(NextResponse.json({ success: true }));
 }

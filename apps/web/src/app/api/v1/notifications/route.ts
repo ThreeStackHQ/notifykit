@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { db, notifications, eq, and, desc } from '@notifykit/db';
 import { verifyApiKey } from '@/lib/api-key';
+import { checkRateLimit } from '@/lib/rate-limiter';
+import { handleOptions, withCors } from '@/lib/cors';
+
+export { handleOptions as OPTIONS };
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +25,12 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Invalid API key' }, { status: 401 });
   }
 
+  // Per-key rate limiting (200 reads/hour by default; scales with rateLimitPerHour)
+  const readLimit = Math.max(200, keyData.rateLimitPerHour * 2);
+  if (!checkRateLimit(`list:${keyData.keyId}`, readLimit)) {
+    return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429 });
+  }
+
   const rows = await (db as unknown as { select: Function })
     .select()
     .from(notifications)
@@ -33,5 +43,5 @@ export async function GET(req: Request) {
     .orderBy(desc(notifications.createdAt))
     .limit(50);
 
-  return NextResponse.json(rows);
+  return withCors(NextResponse.json(rows));
 }
