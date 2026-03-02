@@ -1,5 +1,6 @@
 // Global SSE subscriber store
-// Map<recipientId, Set<ReadableStreamDefaultController>>
+// Map<"workspaceId:recipientId", Set<ReadableStreamDefaultController>>
+// Key MUST include workspaceId to prevent cross-workspace notification leakage (IDOR via SSE).
 declare global {
   // eslint-disable-next-line no-var
   var sseSubscribers: Map<string, Set<ReadableStreamDefaultController>> | undefined;
@@ -12,31 +13,36 @@ export function getSSEStore(): Map<string, Set<ReadableStreamDefaultController>>
   return global.sseSubscribers;
 }
 
+/** Composite key: workspaceId + recipientId prevents cross-workspace SSE leakage */
+export function sseKey(workspaceId: string, recipientId: string): string {
+  return `${workspaceId}:${recipientId}`;
+}
+
 export function addSubscriber(
-  recipientId: string,
+  key: string,
   controller: ReadableStreamDefaultController
 ): void {
   const store = getSSEStore();
-  if (!store.has(recipientId)) {
-    store.set(recipientId, new Set());
+  if (!store.has(key)) {
+    store.set(key, new Set());
   }
-  store.get(recipientId)!.add(controller);
+  store.get(key)!.add(controller);
 }
 
 export function removeSubscriber(
-  recipientId: string,
+  key: string,
   controller: ReadableStreamDefaultController
 ): void {
   const store = getSSEStore();
-  store.get(recipientId)?.delete(controller);
-  if (store.get(recipientId)?.size === 0) {
-    store.delete(recipientId);
+  store.get(key)?.delete(controller);
+  if (store.get(key)?.size === 0) {
+    store.delete(key);
   }
 }
 
-export function publishToSubscribers(recipientId: string, data: string): void {
+export function publishToSubscribers(key: string, data: string): void {
   const store = getSSEStore();
-  const subs = store.get(recipientId);
+  const subs = store.get(key);
   if (!subs) return;
   const message = `data: ${data}\n\n`;
   const encoder = new TextEncoder();

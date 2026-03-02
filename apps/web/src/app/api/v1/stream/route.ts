@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { verifyApiKey } from '@/lib/api-key';
 import { checkRateLimit } from '@/lib/rate-limiter';
 import { handleOptions, CORS_HEADERS } from '@/lib/cors';
-import { addSubscriber, removeSubscriber } from '@/lib/sse-store';
+import { addSubscriber, removeSubscriber, sseKey } from '@/lib/sse-store';
 
 export { handleOptions as OPTIONS };
 export const dynamic = 'force-dynamic';
@@ -29,6 +29,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Too many stream connections. Try again later.' }, { status: 429 });
   }
 
+  // Scope SSE subscriptions by workspace+recipient to prevent cross-workspace leakage
+  const subKey = sseKey(keyData.workspaceId, recipientId);
+
   const encoder = new TextEncoder();
   let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
   let controller: ReadableStreamDefaultController | null = null;
@@ -36,7 +39,7 @@ export async function GET(req: Request) {
   const stream = new ReadableStream({
     start(ctrl) {
       controller = ctrl;
-      addSubscriber(recipientId, ctrl);
+      addSubscriber(subKey, ctrl);
 
       // Send initial connection message
       ctrl.enqueue(encoder.encode(': connected\n\n'));
@@ -57,7 +60,7 @@ export async function GET(req: Request) {
         clearInterval(heartbeatInterval);
       }
       if (controller) {
-        removeSubscriber(recipientId, controller);
+        removeSubscriber(subKey, controller);
       }
     },
   });
@@ -68,7 +71,7 @@ export async function GET(req: Request) {
       clearInterval(heartbeatInterval);
     }
     if (controller) {
-      removeSubscriber(recipientId, controller);
+      removeSubscriber(subKey, controller);
       try {
         controller.close();
       } catch {

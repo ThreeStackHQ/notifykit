@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { db, notifications, subscriptions, eq } from '@notifykit/db';
+import { db, notifications, subscriptions, eq, sql } from '@notifykit/db';
 import { verifyApiKey } from '@/lib/api-key';
 import { checkRateLimit } from '@/lib/rate-limiter';
 import { handleOptions, withCors } from '@/lib/cors';
-import { publishToSubscribers } from '@/lib/sse-store';
+import { publishToSubscribers, sseKey } from '@/lib/sse-store';
 import { sendNotificationEmail } from '@/lib/email';
 import { PLANS } from '@/lib/stripe';
 
@@ -85,17 +85,17 @@ export async function POST(req: Request) {
     })
     .returning();
 
-  // Increment sent count
+  // Atomic SQL increment — avoids race condition under concurrent requests
   await (db as unknown as { update: Function })
     .update(subscriptions)
     .set({
-      notificationsSentThisMonth: keyData.notificationsSentThisMonth + 1,
+      notificationsSentThisMonth: sql`${subscriptions.notificationsSentThisMonth} + 1`,
     })
     .where(eq(subscriptions.userId, keyData.userId))
     .catch(() => {});
 
-  // Publish to SSE
-  publishToSubscribers(recipient_id, JSON.stringify(notification));
+  // Publish to SSE — scoped by workspaceId to prevent cross-workspace leakage
+  publishToSubscribers(sseKey(keyData.workspaceId, recipient_id), JSON.stringify(notification));
 
   // Email fallback
   if (email_fallback) {
