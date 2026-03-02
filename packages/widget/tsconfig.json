@@ -1,0 +1,13 @@
+{
+  "extends": "@notifykit/config/tsconfig",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ES2017",
+    "lib": ["ES2017", "DOM"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "importHelpers": true
+  },
+  "include": ["src"]
+}
