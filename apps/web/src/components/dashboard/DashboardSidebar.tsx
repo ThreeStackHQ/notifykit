@@ -13,6 +13,7 @@ import {
   Menu,
   X,
   LogOut,
+  LayoutDashboard,
 } from 'lucide-react';
 
 interface NavItem {
@@ -22,6 +23,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  { label: 'Overview', href: '/dashboard/overview', icon: LayoutDashboard },
   { label: 'Notifications', href: '/dashboard/notifications', icon: Bell },
   { label: 'API Keys', href: '/dashboard/keys', icon: Key },
   { label: 'Preferences', href: '/dashboard/preferences', icon: SlidersHorizontal },
@@ -51,7 +53,7 @@ export function DashboardSidebar({ email }: DashboardSidebarProps) {
             onClick={onNavigate}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               isActive
-                ? 'bg-teal-600/20 text-teal-400 border border-teal-600/30'
+                ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-600/30'
                 : 'text-gray-400 hover:text-white hover:bg-gray-800'
             }`}
           >
@@ -66,7 +68,7 @@ export function DashboardSidebar({ email }: DashboardSidebarProps) {
   const UserMenu = () => (
     <div className="px-3 py-4 border-t border-gray-800">
       <div className="flex items-center gap-3 px-3 py-2 mb-1">
-        <div className="w-7 h-7 bg-teal-700 rounded-full flex items-center justify-center shrink-0">
+        <div className="w-7 h-7 bg-indigo-700 rounded-full flex items-center justify-center shrink-0">
           <span className="text-xs font-bold text-white">{avatarInitial}</span>
         </div>
         <span className="text-xs text-gray-300 truncate flex-1">{email}</span>
@@ -84,10 +86,10 @@ export function DashboardSidebar({ email }: DashboardSidebarProps) {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-56 bg-[#0a0f14] border-r border-gray-800 min-h-screen fixed top-0 left-0 z-30">
+      <aside className="hidden lg:flex flex-col w-56 bg-[#1e1b4b] border-r border-indigo-900/50 min-h-screen fixed top-0 left-0 z-30">
         {/* Logo */}
-        <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-800">
-          <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
+        <div className="flex items-center gap-3 px-4 py-5 border-b border-indigo-900/50">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
             <Bell className="w-4 h-4 text-white" />
           </div>
           <span className="font-bold text-white text-lg">NotifyKit</span>
@@ -98,16 +100,16 @@ export function DashboardSidebar({ email }: DashboardSidebarProps) {
       </aside>
 
       {/* Mobile Top Bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-[#0a0f14] border-b border-gray-800 px-4 py-3 flex items-center justify-between">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-[#1e1b4b] border-b border-indigo-900/50 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-teal-600 rounded-lg flex items-center justify-center">
+          <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
             <Bell className="w-3.5 h-3.5 text-white" />
           </div>
           <span className="font-bold text-white">NotifyKit</span>
         </div>
         <button
           onClick={() => setMobileOpen(true)}
-          className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-gray-800 transition-colors"
+          className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-indigo-900/40 transition-colors"
           aria-label="Open menu"
         >
           <Menu className="w-5 h-5" />
@@ -121,17 +123,17 @@ export function DashboardSidebar({ email }: DashboardSidebarProps) {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="relative w-64 bg-[#0a0f14] border-r border-gray-800 h-full flex flex-col">
-            <div className="flex items-center justify-between px-4 py-4 border-b border-gray-800">
+          <aside className="relative w-64 bg-[#1e1b4b] border-r border-indigo-900/50 h-full flex flex-col">
+            <div className="flex items-center justify-between px-4 py-4 border-b border-indigo-900/50">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 bg-teal-600 rounded-lg flex items-center justify-center">
+                <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
                   <Bell className="w-3.5 h-3.5 text-white" />
                 </div>
                 <span className="font-bold text-white">NotifyKit</span>
               </div>
               <button
                 onClick={() => setMobileOpen(false)}
-                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-gray-800 transition-colors"
+                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-indigo-900/40 transition-colors"
                 aria-label="Close menu"
               >
                 <X className="w-5 h-5" />
